@@ -21,5 +21,5 @@
 ```
 
 ## 📧 Other Contact Info
-- GitHub Repo: <https://github.com/user-name/repo-name>
+- GitHub Repo: https://github.com/Tshidivhano1-blip/Edumate
 - Other Info (if available): LinkedIn, Website, etc.
