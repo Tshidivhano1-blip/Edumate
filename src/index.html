@@ -3,32 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Display</title>
+    <title>Chatbot Interface</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" xintegrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
+        /* Custom scrollbar for a cleaner look */
+        #chat-window::-webkit-scrollbar {
+            width: 8px;
+        }
+        #chat-window::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        #chat-window::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 4px;
+        }
+        #chat-window::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        /* Styles for the typing indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+        }
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            float: left;
+            margin: 0 1px;
+            background-color: #94a3b8;
+            display: block;
+            border-radius: 50%;
+            opacity: 0.4;
+            animation: 1s blink infinite .3333s;
+        }
+        .typing-indicator span:nth-child(2) {
+            animation-delay: .6666s;
+        }
+        .typing-indicator span:nth-child(3) {
+            animation-delay: .9999s;
+        }
+        @keyframes blink {
+            50% { opacity: 1; }
         }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-    <!-- Main container to center the content -->
-    <div class="min-h-screen flex flex-col items-center justify-center p-4">
-        <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold">Edumate a students best friend</h1>
-            <p class="text-lg text-gray-600 dark:text-gray-400 mt-2">A simple page to showcase the provided image.</p>
-        </div>
+<body class="bg-slate-100 font-sans">
 
-        <!-- Image container with shadow and rounded corners -->
-        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-2xl max-w-4xl w-full">
-            <img 
-                src="https://i.postimg.cc/QC6nqtvQ/Gemini-Generated-Image-g80dk0g80dk0g80d.png" 
-                alt="Gemini Generated Image" 
-                class="rounded-lg w-full h-auto"
-                onerror="this.onerror=null;this.src='https://placehold.co/600x400/ef4444/ffffff?text=Image+Not+Found';"
-            >
-        </div>
+    <div id="chat-container" class="flex flex-col h-screen max-w-2xl mx-auto bg-white shadow-2xl rounded-lg">
+        <!-- Header -->
+        <header class="bg-slate-800 text-white p-4 flex items-center justify-between rounded-t-lg shadow-md">
+            <h1 class="text-xl font-bold">AI Assistant</h1>
+            <p class="text-sm text-slate-300">Online</p>
+        </header>
+
+        <!-- Chat Window -->
+        <main id="chat-window" class="flex-1 p-6 overflow-y-auto space-y-6">
+            <!-- Initial welcome message from the bot -->
+            <div class="chat-message bot">
+                <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center">
+                        <i class="fa-solid fa-robot text-white"></i>
+                    </div>
+                    <div class="bg-slate-200 p-3 rounded-lg rounded-tl-none max-w-xs md:max-w-md">
+                        <p class="text-sm text-slate-800">Hello! How can I assist you today?</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Input Area -->
+        <footer class="p-4 bg-slate-50 border-t border-slate-200 rounded-b-lg">
+            <div class="flex items-center space-x-3">
+                <input type="text" id="message-input" placeholder="Type your message here..." class="flex-1 w-full px-4 py-2 text-sm bg-slate-100 border border-slate-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300">
+                <button id="send-button" class="bg-blue-600 text-white rounded-full p-2 w-10 h-10 flex items-center justify-center hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 transform hover:scale-110">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+        </footer>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const webhookUrl = 'https://tech1forward.app.n8n.cloud/webhook/7cc05825-4189-4661-b39d-982c601af50d';
+
+            const chatWindow = document.getElementById('chat-window');
+            const messageInput = document.getElementById('message-input');
+            const sendButton = document.getElementById('send-button');
+
+            // --- Function to add a message to the chat window ---
+            const addMessage = (message, sender) => {
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('chat-message', sender);
+
+                let messageBubble;
+                if (sender === 'user') {
+                    messageBubble = `
+                        <div class="flex items-end justify-end gap-3">
+                            <div class="bg-blue-600 text-white p-3 rounded-lg rounded-br-none max-w-xs md:max-w-md">
+                                <p class="text-sm">${message}</p>
+                            </div>
+                            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-slate-300 flex items-center justify-center">
+                                <i class="fa-solid fa-user text-slate-600"></i>
+                            </div>
+                        </div>`;
+                } else {
+                    messageBubble = `
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center">
+                                <i class="fa-solid fa-robot text-white"></i>
+                            </div>
+                            <div class="bg-slate-200 p-3 rounded-lg rounded-tl-none max-w-xs md:max-w-md">
+                                <p class="text-sm text-slate-800">${message}</p>
+                            </div>
+                        </div>`;
+                }
+                
+                messageElement.innerHTML = messageBubble;
+                chatWindow.appendChild(messageElement);
+
+                // Scroll to the latest message
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            };
+            
+            // --- Function to show typing indicator ---
+            const showTypingIndicator = () => {
+                const typingIndicator = document.createElement('div');
+                typingIndicator.id = 'typing-indicator';
+                typingIndicator.classList.add('chat-message', 'bot');
+                typingIndicator.innerHTML = `
+                    <div class="flex items-start gap-3">
+                         <div class="flex-shrink-0 w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center">
+                            <i class="fa-solid fa-robot text-white"></i>
+                        </div>
+                        <div class="bg-slate-200 p-3 rounded-lg rounded-tl-none typing-indicator">
+                            <span></span><span></span><span></span>
+                        </div>
+                    </div>`;
+                chatWindow.appendChild(typingIndicator);
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }
+
+            // --- Function to hide typing indicator ---
+            const hideTypingIndicator = () => {
+                const indicator = document.getElementById('typing-indicator');
+                if (indicator) {
+                    indicator.remove();
+                }
+            }
+
+
+            // --- Function to handle sending the message ---
+            const handleSendMessage = async () => {
+                const messageText = messageInput.value.trim();
+                if (!messageText) return;
+
+                // Add user message to UI
+                addMessage(messageText, 'user');
+                messageInput.value = '';
+                showTypingIndicator();
+
+                try {
+                    // Send message to the webhook
+                    const response = await fetch(webhookUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message: messageText }),
+                    });
+
+                    hideTypingIndicator();
+
+                    if (!response.ok) {
+                        throw new Error(`Webhook error: ${response.statusText}`);
+                    }
+
+                    // n8n can return different content types, let's try to handle JSON first
+                    let botReply = '';
+                    try {
+                        const data = await response.json();
+                        // Look for a reply in common keys from n8n. Adjust if your n8n workflow returns a different structure.
+                        botReply = data.reply || data.message || data.response || JSON.stringify(data);
+                    } catch (e) {
+                        // If it's not JSON, try to read it as text.
+                        botReply = await response.text();
+                    }
+
+                    addMessage(botReply, 'bot');
+
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                    hideTypingIndicator();
+                    addMessage('Sorry, I seem to be having trouble connecting. Please try again later.', 'bot');
+                }
+            };
+
+            // --- Event Listeners ---
+            sendButton.addEventListener('click', handleSendMessage);
+            messageInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault(); // Prevent new line on Enter
+                    handleSendMessage();
+                }
+            });
+        });
+    </script>
 </body>
 </html>
