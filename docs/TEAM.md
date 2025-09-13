@@ -6,7 +6,7 @@
 
 ## ⚒️ Team Name
 ``` c
-// TODO: Fill-in the name of your team.
+// Next Generation
 ```
 
 ## 👥 Members
@@ -22,4 +22,4 @@
 
 ## 📧 Other Contact Info
 - GitHub Repo: https://github.com/Tshidivhano1-blip/Edumate
-- Other Info (if available): LinkedIn, Website, etc.
+- Other Info (if available): LinkedIn: https://www.linkedin.com/in/tshidivhano-dagada-b6329791/ 
